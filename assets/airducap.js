@@ -48,7 +48,8 @@ jQuery(document).ready(function($) {
                 console.log('Airport search response:', response);
 
                 if (response && response.success && response.data) {
-                    var list = response.data;
+                    // Fix: Check if response.data has a nested data property (array)
+                    var list = Array.isArray(response.data) ? response.data : response.data.data;
                     console.log('Airport data:', list);
 
                     if (Array.isArray(list) && list.length > 0) {
@@ -142,50 +143,55 @@ jQuery(document).ready(function($) {
         var children = $('#children').val();
         var infants = $('#infants').val();
 
-        // Convert date format from YYYY-MM-DD to DD/MM/YYYY
+        // Convert date format to DD/MM/YYYY as expected by the API
         function convertDateFormat(dateString) {
             console.log('Converting date:', dateString); // Debug log
             if (!dateString) return '';
+            
             var s = dateString.trim();
-            // If contains '/'
-            if (s.indexOf('/') !== -1) {
-                var p = s.split('/');
-                if (p.length === 3) {
-                    var a = p[0], b = p[1], y = p[2];
-                    var ai = parseInt(a, 10), bi = parseInt(b, 10);
-                    // If first part > 12 => definitely DD/MM/YYYY already
-                    if (ai > 12) {
-                        var dd1 = a.padStart(2, '0');
-                        var mm1 = b.padStart(2, '0');
-                        var out1 = dd1 + '/' + mm1 + '/' + y;
-                        console.log('Assumed DD/MM/YYYY already ->', out1);
-                        return out1;
-                    }
-                    // If second part > 12 => must be MM/DD/YYYY -> swap
-                    if (bi > 12) {
-                        var dd2 = b.padStart(2, '0');
-                        var mm2 = a.padStart(2, '0');
-                        var out2 = dd2 + '/' + mm2 + '/' + y;
-                        console.log('Converted MM/DD/YYYY ->', out2);
-                        return out2;
-                    }
-                    // Ambiguous (both <= 12). Assume input is MM/DD/YYYY and swap.
-                    var dd3 = b.padStart(2, '0');
-                    var mm3 = a.padStart(2, '0');
-                    var out3 = dd3 + '/' + mm3 + '/' + y;
-                    console.log('Ambiguous, assuming MM/DD/YYYY ->', out3);
-                    return out3;
-                }
-            }
-            // If contains '-' and looks like YYYY-MM-DD
+            
+            // If contains '-' and looks like YYYY-MM-DD (HTML date input format)
             if (s.indexOf('-') !== -1) {
-                var q = s.split('-');
-                if (q.length === 3 && q[0].length === 4) {
-                    var out4 = q[2].padStart(2,'0') + '/' + q[1].padStart(2,'0') + '/' + q[0];
-                    console.log('Converted YYYY-MM-DD ->', out4);
-                    return out4;
+                var parts = s.split('-');
+                if (parts.length === 3 && parts[0].length === 4) {
+                    var day = parts[2].padStart(2, '0');
+                    var month = parts[1].padStart(2, '0');
+                    var year = parts[0];
+                    var result = day + '/' + month + '/' + year;
+                    console.log('Converted YYYY-MM-DD to DD/MM/YYYY:', result);
+                    return result;
                 }
             }
+            
+            // If contains '/' - try to detect if it's already DD/MM/YYYY
+            if (s.indexOf('/') !== -1) {
+                var parts = s.split('/');
+                if (parts.length === 3) {
+                    var first = parseInt(parts[0], 10);
+                    var second = parseInt(parts[1], 10);
+                    var year = parts[2];
+                    
+                    // If first part > 12, it's likely DD/MM/YYYY already
+                    if (first > 12) {
+                        var result = parts[0].padStart(2, '0') + '/' + parts[1].padStart(2, '0') + '/' + year;
+                        console.log('Already DD/MM/YYYY format:', result);
+                        return result;
+                    }
+                    
+                    // If second part > 12, it's MM/DD/YYYY, need to swap
+                    if (second > 12) {
+                        var result = parts[1].padStart(2, '0') + '/' + parts[0].padStart(2, '0') + '/' + year;
+                        console.log('Converted MM/DD/YYYY to DD/MM/YYYY:', result);
+                        return result;
+                    }
+                    
+                    // Both are <= 12, assume it's DD/MM/YYYY format already
+                    var result = parts[0].padStart(2, '0') + '/' + parts[1].padStart(2, '0') + '/' + year;
+                    console.log('Assuming DD/MM/YYYY format:', result);
+                    return result;
+                }
+            }
+            
             // Fallback: return as-is
             console.log('Returning date as-is:', s);
             return s;
