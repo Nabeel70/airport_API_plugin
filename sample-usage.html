@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Air Du Cap Integration - Sample Usage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .instructions {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .code-block {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+        }
+        
+        .step {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 6px;
+            border-left: 3px solid #4caf50;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        h1, h2, h3 {
+            color: #333;
+        }
+        
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛩️ Air Du Cap API Integration - Setup Guide</h1>
+    
+    <div class="instructions">
+        <h2>📋 Quick Setup Instructions</h2>
+        <p>Follow these steps to get your Air Du Cap flight search working on your WordPress website:</p>
+    </div>
+    
+    <div class="step">
+        <h3>Step 1: Activate the Plugin</h3>
+        <ol>
+            <li>Go to your WordPress Admin Dashboard</li>
+            <li>Navigate to <strong>Plugins → Installed Plugins</strong></li>
+            <li>Find <strong>"Air Du Cap API Integration"</strong></li>
+            <li>Click <strong>"Activate"</strong></li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <h3>Step 2: Configure Settings (Optional)</h3>
+        <ol>
+            <li>Go to <strong>Settings → Air Du Cap</strong> in your WordPress admin</li>
+            <li>The plugin comes pre-configured with your API credentials</li>
+            <li>Click <strong>"Test Connection"</strong> to verify everything works</li>
+            <li>Save settings if you make any changes</li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <h3>Step 3: Add the Search Form to Your Page</h3>
+        
+        <h4>Option A: Using Shortcode (Recommended)</h4>
+        <p>Add this shortcode to any page or post:</p>
+        <div class="code-block">[airducap_search_form]</div>
+        
+        <h4>Option B: In Elementor</h4>
+        <ol>
+            <li>Edit your page with Elementor</li>
+            <li>Add an <strong>HTML Widget</strong></li>
+            <li>Paste the shortcode: <span class="highlight">[airducap_search_form]</span></li>
+            <li>Update the page</li>
+        </ol>
+        
+        <h4>Option C: In Gutenberg (Block Editor)</h4>
+        <ol>
+            <li>Edit your page</li>
+            <li>Add a <strong>Shortcode Block</strong></li>
+            <li>Paste: <span class="highlight">[airducap_search_form]</span></li>
+            <li>Publish the page</li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <h3>Step 4: Test the Functionality</h3>
+        <ol>
+            <li>Visit the page where you added the shortcode</li>
+            <li>Try typing in the Origin field (e.g., "New York")</li>
+            <li>Select an airport from the dropdown</li>
+            <li>Do the same for Destination</li>
+            <li>Select dates and passenger count</li>
+            <li>Click <strong>"Search"</strong></li>
+        </ol>
+    </div>
+    
+    <div class="container">
+        <h2>🎛️ Available Shortcodes</h2>
+        
+        <h3>Primary Search Form</h3>
+        <div class="code-block">[airducap_search_form]</div>
+        <p>Displays the complete flight search form with all functionality.</p>
+        
+        <h3>Search Form without Tours Tab</h3>
+        <div class="code-block">[airducap_search_form show_tours="false"]</div>
+        <p>Displays only the flight search tab, hiding the tours option.</p>
+        
+        <h3>Results Page (Optional)</h3>
+        <div class="code-block">[airducap_flight_results]</div>
+        <p>Use this on a separate results page if you want to show results elsewhere.</p>
+    </div>
+    
+    <div class="container">
+        <h2>🔧 Customization Options</h2>
+        
+        <h3>Styling</h3>
+        <p>To customize the appearance, edit:</p>
+        <div class="code-block">/wp-content/plugins/airducap-integration/assets/airducap.css</div>
+        
+        <h3>Functionality</h3>
+        <p>To modify behavior, edit:</p>
+        <div class="code-block">/wp-content/plugins/airducap-integration/assets/airducap.js</div>
+        
+        <h3>API Settings</h3>
+        <p>Go to <strong>Settings → Air Du Cap</strong> in WordPress admin to:</p>
+        <ul>
+            <li>Change API credentials</li>
+            <li>Set default currency</li>
+            <li>Enable debug mode</li>
+            <li>Test API connection</li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <h3>⚠️ Important Notes</h3>
+        <ul>
+            <li><strong>API Credentials:</strong> The plugin is pre-configured with your test credentials</li>
+            <li><strong>Rate Limiting:</strong> Don't make too many API requests in testing</li>
+            <li><strong>HTTPS Required:</strong> The API requires secure connections</li>
+            <li><strong>JavaScript:</strong> The plugin requires JavaScript to be enabled</li>
+        </ul>
+    </div>
+    
+    <div class="container">
+        <h2>🐛 Troubleshooting</h2>
+        
+        <h3>Common Issues & Solutions</h3>
+        
+        <div style="margin: 15px 0;">
+            <strong>Search form not showing:</strong>
+            <ul>
+                <li>Check if plugin is activated</li>
+                <li>Verify shortcode spelling</li>
+                <li>Try on a different page</li>
+            </ul>
+        </div>
+        
+        <div style="margin: 15px 0;">
+            <strong>Airport search not working:</strong>
+            <ul>
+                <li>Check browser console for JavaScript errors</li>
+                <li>Test API connection in Settings → Air Du Cap</li>
+                <li>Verify internet connection</li>
+            </ul>
+        </div>
+        
+        <div style="margin: 15px 0;">
+            <strong>No flight results:</strong>
+            <ul>
+                <li>Try different airport combinations</li>
+                <li>Check if dates are in the future</li>
+                <li>Verify API credentials are correct</li>
+            </ul>
+        </div>
+        
+        <div style="margin: 15px 0;">
+            <strong>Styling issues:</strong>
+            <ul>
+                <li>Clear browser cache</li>
+                <li>Check for CSS conflicts with theme</li>
+                <li>Test with a default WordPress theme</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>📞 Support Information</h2>
+        <p>For additional help:</p>
+        <ul>
+            <li>Check the plugin's README.md file for detailed documentation</li>
+            <li>Enable debug mode in Settings → Air Du Cap</li>
+            <li>Check WordPress error logs</li>
+            <li>Test API connection using the admin panel</li>
+        </ul>
+        
+        <h3>API Documentation</h3>
+        <p>Full API documentation available at:</p>
+        <div class="code-block">https://uat-book.airducap.com/api/schema/redoc/</div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 50px; padding: 30px; background: #f0f0f0; border-radius: 8px;">
+        <h2>🎉 You're All Set!</h2>
+        <p>Your Air Du Cap flight search integration is ready to use. Add the shortcode to your page and start testing!</p>
+        <div style="font-size: 24px; margin: 20px 0;">
+            <span class="highlight">[airducap_search_form]</span>
+        </div>
+    </div>
+</body>
+</html>

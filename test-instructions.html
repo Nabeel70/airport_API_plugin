@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Air Du Cap Plugin Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .instructions { background: #f0f8ff; padding: 20px; border-radius: 5px; margin-bottom: 30px; }
+        .shortcode { background: #f5f5f5; padding: 10px; font-family: monospace; border-left: 4px solid #007cba; }
+    </style>
+</head>
+<body>
+    <h1>Air Du Cap Integration Plugin - Test Page</h1>
+
+    <div class="instructions">
+        <h2>How to Test the Plugin:</h2>
+        <ol>
+            <li><strong>Go to your WordPress admin</strong> → Settings → Air Du Cap</li>
+            <li><strong>Click "Test API Connection"</strong> - it should now show more detailed results</li>
+            <li><strong>Create a new page/post</strong> in WordPress</li>
+            <li><strong>Add this shortcode</strong> to the page content:</li>
+        </ol>
+
+        <div class="shortcode">[airducap_search_form]</div>
+
+        <p><strong>Then test the form by:</strong></p>
+        <ul>
+            <li>Typing airport names like: <strong>Miami, London, Paris, New York, Los Angeles</strong></li>
+            <li>Typing airport codes like: <strong>LAX, JFK, LHR, CDG, MIA</strong></li>
+            <li>Trying partial names like: <strong>new, los, mia, lon</strong></li>
+        </ul>
+    </div>
+
+    <h2>Troubleshooting Tips:</h2>
+
+    <h3>If you still see "No airports found":</h3>
+    <ol>
+        <li><strong>Enable Debug Logging</strong> in Settings → Air Du Cap</li>
+        <li><strong>Try searching</strong> for airports in the form</li>
+        <li><strong>Check WordPress debug log</strong> (usually at <code>/wp-content/debug.log</code>)</li>
+        <li><strong>Look for API response</strong> - it will show exactly what the API is returning</li>
+    </ol>
+
+    <h3>Common Issues:</h3>
+    <ul>
+        <li><strong>API might require specific search terms</strong> - try different airport names</li>
+        <li><strong>API might have geographical restrictions</strong> - try major international airports</li>
+        <li><strong>API database might be limited</strong> - check with Air Du Cap what airports are available</li>
+    </ul>
+
+    <h3>Testing Flight Search:</h3>
+    <p>Once you can find airports, you can test flight search by:</p>
+    <ol>
+        <li>Selecting origin and destination airports</li>
+        <li>Choosing departure date (and optional return date)</li>
+        <li>Setting number of passengers</li>
+        <li>Clicking "Search Flights"</li>
+    </ol>
+
+    <hr>
+    <p><small>This is a test file to help you understand how to use the Air Du Cap plugin. You can delete this file once everything is working.</small></p>
+</body>
+</html>
+

@@ -1,0 +1,401 @@
+{
+	"info": {
+		"_postman_id": "airducap-api-testing",
+		"name": "Air Du Cap API Testing",
+		"description": "Complete API testing collection for Air Du Cap flight booking system",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://book.airducap.com",
+			"description": "Production API base URL"
+		},
+		{
+			"key": "uatUrl",
+			"value": "https://uat-book.airducap.com",
+			"description": "UAT API base URL"
+		},
+		{
+			"key": "username",
+			"value": "dev101@dev101.com",
+			"description": "API username"
+		},
+		{
+			"key": "password",
+			"value": "QgdYlFgTvAQTcCC",
+			"description": "API password"
+		},
+		{
+			"key": "currency",
+			"value": "ZAR",
+			"description": "Default currency"
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "username",
+				"value": "{{username}}",
+				"type": "string"
+			},
+			{
+				"key": "password",
+				"value": "{{password}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Airport Search Tests",
+			"item": [
+				{
+					"name": "Search: Cape Winelands",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/airports/api/list/?q=cape winelands&field_name=from_location",
+							"host": ["{{baseUrl}}"],
+							"path": ["airports", "api", "list", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "cape winelands"
+								},
+
+
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Response is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is array', function () {",
+									"    const body = pm.response.json();",
+									"    pm.expect(Array.isArray(body)).to.be.true;",
+									"    console.log('Found airports:', body.length);",
+									"    if (body.length > 0) {",
+									"        console.log('First airport:', body[0]);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Search: Virginia",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/airports/api/list/?q=virginia&field_name=from_location",
+							"host": ["{{baseUrl}}"],
+							"path": ["airports", "api", "list", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "virginia"
+								},
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Search: Cape",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/airports/api/list/?q=cape&field_name=from_location",
+							"host": ["{{baseUrl}}"],
+							"path": ["airports", "api", "list", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "cape"
+								},
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Search: London",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/airports/api/list/?q=london&field_name=from_location",
+							"host": ["{{baseUrl}}"],
+							"path": ["airports", "api", "list", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "london"
+								},
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Flight Search Tests",
+			"item": [
+				{
+					"name": "Sample Flight Search (East London to Cape Winelands)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/flights/api/search/?from_location=101&to_location=94&date_of_travel=28/08/2025&adults=1&currency={{currency}}&ip_address=127.0.0.1",
+							"host": ["{{baseUrl}}"],
+							"path": ["flights", "api", "search", ""],
+							"query": [
+								{
+									"key": "from_location",
+									"value": "101",
+									"description": "East London airport ID"
+								},
+								{
+									"key": "to_location",
+									"value": "94",
+									"description": "Cape Winelands airport ID"
+								},
+								{
+									"key": "date_of_travel",
+									"value": "28/08/2025"
+								},
+								{
+									"key": "adults",
+									"value": "1"
+								},
+								{
+									"key": "currency",
+									"value": "{{currency}}"
+								},
+								{
+									"key": "ip_address",
+									"value": "127.0.0.1"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Flight search successful', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.be.an('object');",
+									"    pm.expect(body.available_flights).to.be.an('array');",
+									"    console.log('Trip type:', body.trip_type);",
+									"    console.log('Available flights:', body.available_flights.length);",
+									"    console.log('Map URL:', body.map_image_url);",
+									"    if (body.available_flights.length > 0) {",
+									"        console.log('First flight:', body.available_flights[0]);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Round Trip Flight Search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/flights/api/search/?from_location=214&to_location=191&date_of_travel=28/08/2025&date_of_return=31/08/2025&adults=1&currency={{currency}}&ip_address=127.0.0.1",
+							"host": ["{{baseUrl}}"],
+							"path": ["flights", "api", "search", ""],
+							"query": [
+								{
+									"key": "from_location",
+									"value": "214",
+									"description": "Hoedspruit Civil airport ID"
+								},
+								{
+									"key": "to_location",
+									"value": "191",
+									"description": "Fork West airport ID"
+								},
+								{
+									"key": "date_of_travel",
+									"value": "28/08/2025"
+								},
+								{
+									"key": "date_of_return",
+									"value": "31/08/2025"
+								},
+								{
+									"key": "adults",
+									"value": "1"
+								},
+								{
+									"key": "currency",
+									"value": "{{currency}}"
+								},
+								{
+									"key": "ip_address",
+									"value": "127.0.0.1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Environment Comparison",
+			"item": [
+				{
+					"name": "UAT - Search Cape Winelands",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{uatUrl}}/airports/api/list/?q=cape winelands&field_name=from_location",
+							"host": ["{{uatUrl}}"],
+							"path": ["airports", "api", "list", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "cape winelands"
+								},
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Production - Search Cape Winelands",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/airports/api/list/?q=cape winelands&field_name=from_location",
+							"host": ["{{baseUrl}}"],
+							"path": ["airports", "api", "list", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "cape winelands"
+								},
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Bulk Airport Discovery",
+			"item": [
+				{
+					"name": "Search: A",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/airports/api/list/?q=a&field_name=from_location",
+							"host": ["{{baseUrl}}"],
+							"path": ["airports", "api", "list", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "a"
+								},
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Search: E",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/airports/api/list/?q=e&field_name=from_location",
+							"host": ["{{baseUrl}}"],
+							"path": ["airports", "api", "list", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "e"
+								},
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Search: Port",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/airports/api/list/?q=port&field_name=from_location",
+							"host": ["{{baseUrl}}"],
+							"path": ["airports", "api", "list", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "port"
+								},
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}
+
