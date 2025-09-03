@@ -1,6 +1,142 @@
 jQuery(document).ready(function($) {
     var searchTimeout;
 
+    // Initialize passengers dropdown functionality
+    initializePassengersDropdown();
+    
+    // Initialize tab functionality
+    initializeTabFunctionality();
+
+    function initializePassengersDropdown() {
+        // Toggle dropdown
+        $(document).on('click', '#passengers-dropdown', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var menu = $('#passengers-menu');
+            var btn = $(this);
+            
+            if (menu.hasClass('show')) {
+                menu.removeClass('show');
+                btn.removeClass('active');
+            } else {
+                menu.addClass('show');
+                btn.addClass('active');
+            }
+        });
+
+        // Close dropdown when clicking outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.passengers-dropdown-container').length) {
+                $('#passengers-menu').removeClass('show');
+                $('#passengers-dropdown').removeClass('active');
+            }
+        });
+
+        // Passenger count controls
+        $(document).on('click', '.passenger-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var type = $(this).data('type');
+            var isPlus = $(this).hasClass('plus');
+            var countElement = $('#' + type + '-count');
+            var hiddenInput = $('#' + type);
+            var currentCount = parseInt(countElement.text());
+            
+            var newCount = currentCount;
+            
+            if (isPlus) {
+                newCount = Math.min(currentCount + 1, 9);
+            } else {
+                var minValue = type === 'adults' ? 1 : 0;
+                newCount = Math.max(currentCount - 1, minValue);
+            }
+            
+            countElement.text(newCount);
+            hiddenInput.val(newCount);
+            
+            updatePassengerSummary();
+            updateButtonStates();
+        });
+
+        // Travel class selection
+        $(document).on('change', 'input[name="travel_class"]', function() {
+            $('#class').val($(this).val());
+            updatePassengerSummary();
+        });
+
+        function updatePassengerSummary() {
+            var adults = parseInt($('#adults-count').text());
+            var children = parseInt($('#children-count').text());
+            var infants = parseInt($('#infants-count').text());
+            var travelClass = $('input[name="travel_class"]:checked').val();
+            
+            var totalPassengers = adults + children + infants;
+            var summary = '';
+            
+            if (adults > 0) {
+                summary += adults + (adults === 1 ? ' Adult' : ' Adults');
+            }
+            if (children > 0) {
+                summary += (summary ? ', ' : '') + children + (children === 1 ? ' Child' : ' Children');
+            }
+            if (infants > 0) {
+                summary += (summary ? ', ' : '') + infants + (infants === 1 ? ' Infant' : ' Infants');
+            }
+            
+            // Add class
+            var classNames = {
+                'economy': 'Economy',
+                'business': 'Business',
+                'first': 'First Class'
+            };
+            
+            summary += ', ' + (classNames[travelClass] || 'Economy');
+            
+            $('.passenger-summary').text(summary);
+        }
+
+        function updateButtonStates() {
+            // Update minus button states
+            $('.passenger-btn.minus[data-type="adults"]').prop('disabled', parseInt($('#adults-count').text()) <= 1);
+            $('.passenger-btn.minus[data-type="children"]').prop('disabled', parseInt($('#children-count').text()) <= 0);
+            $('.passenger-btn.minus[data-type="infants"]').prop('disabled', parseInt($('#infants-count').text()) <= 0);
+            
+            // Update plus button states
+            $('.passenger-btn.plus').prop('disabled', false);
+            $('.passenger-btn.plus').each(function() {
+                var type = $(this).data('type');
+                var count = parseInt($('#' + type + '-count').text());
+                if (count >= 9) {
+                    $(this).prop('disabled', true);
+                }
+            });
+        }
+
+        // Initialize button states
+        updateButtonStates();
+    }
+
+    function initializeTabFunctionality() {
+        $(document).on('click', '.tab-button', function() {
+            var tab = $(this).data('tab');
+            
+            // Update active tab
+            $('.tab-button').removeClass('active');
+            $(this).addClass('active');
+            
+            // Handle round trip vs one way functionality
+            if (tab === 'round-trip') {
+                $('#return_date').attr('required', true);
+                $('.return-field').show();
+            } else {
+                $('#return_date').attr('required', false);
+                $('.return-field').show(); // Keep visible but not required
+            }
+        });
+    }
+
     // Delegate airport search input for dynamically injected content
     $(document).on('input', '.airport-search', function() {
         var input = $(this);
@@ -263,6 +399,7 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 console.log('Flight search response:', response); // Debug log
+                console.log('Response data structure:', JSON.stringify(response.data, null, 2)); // Detailed structure
                 if (response.success) {
                     displayFlightResults(response.data, resultsDiv);
                 } else {
@@ -282,9 +419,9 @@ jQuery(document).ready(function($) {
         var html = '<div class="flight-results-container">';
         html += '<h2>Flight Search Results</h2>';
 
-        // Simplified map image handling - no complex inline JavaScript
+        // Map section
         if (data.map_image_url) {
-            console.log('Map image URL:', data.map_image_url); // Debug the exact URL
+            console.log('Map image URL:', data.map_image_url);
             html += '<div class="route-map">';
             html += '<img src="' + data.map_image_url + '" alt="Flight Route Map" class="route-map-img" />';
             html += '<div class="map-fallback" style="display: none;">';
@@ -293,6 +430,7 @@ jQuery(document).ready(function($) {
             html += '</div>';
         }
         
+        // Notifications
         if (data.notifications && data.notifications.length > 0) {
             html += '<div class="notifications">';
             $.each(data.notifications, function(index, notification) {
@@ -301,79 +439,190 @@ jQuery(document).ready(function($) {
             html += '</div>';
         }
         
+        // Flight results - using Bootstrap-based design like the client's website
         if (data.available_flights && data.available_flights.length > 0) {
-            html += '<div class="flights-grid">';
+            html += '<div class="row row-cols-sm-2 row-cols-md-3 row-cols-lg-3 g-4 my-4 justify-content-center">';
 
             $.each(data.available_flights, function(index, flight) {
-                // Normalize fields with fallbacks
-                var planeName = flight.plane_name || flight.plane || flight.aircraft || 'Aircraft';
-                var price = flight.computed_price || flight.price || '';
+                console.log('Processing flight:', flight); // Debug each flight
+                
+                // Extract flight data with proper fallbacks
+                var planeName = flight.plane_name || flight.plane || 'Aircraft';
+                var planeDescription = flight.plane_description || flight.description || '';
+                var totalPrice = flight.total_price || flight.computed_price || flight.price || '';
                 var pricePerHead = flight.price_per_head || flight.price_per_person || '';
-                var duration = flight.duration || '';
-                var distance = flight.distance || flight.distance_km || '';
-                var speed = flight.speed || '';
-                var seats = flight.number_of_seats || flight.seats || '';
-                var bookingUrl = flight.booking_url || flight.book_url || flight.url || '';
-
-                // Images: support array or comma-separated string
-                var images = [];
-                if (Array.isArray(flight.plane_image_urls)) {
-                    images = flight.plane_image_urls;
-                } else if (typeof flight.plane_image_urls === 'string' && flight.plane_image_urls.length) {
-                    images = flight.plane_image_urls.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
-                } else if (Array.isArray(flight.image_urls)) {
-                    images = flight.image_urls;
-                } else if (typeof flight.image_urls === 'string' && flight.image_urls.length) {
-                    images = flight.image_urls.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+                
+                // Convert speed from knots to km/h for display (multiply by 1.852)
+                var speedKnots = flight.speed || 0;
+                var cruiseSpeed = speedKnots ? Math.round(speedKnots * 1.852) + ' km/h' : '';
+                
+                var maxLoad = flight.max_load || flight.number_of_seats || flight.seats || '';
+                var duration = flight.duration || flight.flight_duration || '';
+                
+                // Round distance to whole number and add km
+                var distanceRaw = flight.distance || flight.distance_km || 0;
+                var distance = distanceRaw ? Math.round(distanceRaw) + ' km' : '';
+                
+                var bookingUrl = flight.booking_url || flight.book_url || '';
+                
+                // Extract departure and return dates from the form data or flight data
+                var departureDate = flight.departure_date || $('#depart_date').val() || '';
+                var returnDate = flight.return_date || $('#return_date').val() || '';
+                
+                // Format dates to match client's format (e.g., "Sept. 9, 2025")
+                function formatDisplayDate(dateStr) {
+                    if (!dateStr) return '';
+                    
+                    try {
+                        // Parse DD/MM/YYYY format
+                        var parts = dateStr.split('/');
+                        if (parts.length === 3) {
+                            var day = parseInt(parts[0], 10);
+                            var month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+                            var year = parseInt(parts[2], 10);
+                            
+                            var date = new Date(year, month, day);
+                            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                         'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+                            
+                            return months[date.getMonth()] + '. ' + day + ', ' + year;
+                        }
+                    } catch (e) {
+                        console.error('Date formatting error:', e);
+                    }
+                    return dateStr;
+                }
+                
+                var formattedDepartureDate = formatDisplayDate(departureDate);
+                var formattedReturnDate = formatDisplayDate(returnDate);
+                
+                // Handle plane images - support multiple images for carousel
+                var planeImages = [];
+                if (flight.plane_images && Array.isArray(flight.plane_images)) {
+                    planeImages = flight.plane_images;
+                } else if (flight.plane_image_urls && Array.isArray(flight.plane_image_urls)) {
+                    planeImages = flight.plane_image_urls;
+                } else if (flight.plane_image_urls && typeof flight.plane_image_urls === 'string') {
+                    planeImages = flight.plane_image_urls.split(',').map(function(url) { return url.trim(); });
+                } else if (flight.plane_image) {
+                    planeImages = [flight.plane_image];
                 }
 
-                var coverImg = images.length ? images[0] : '';
-
-                html += '<div class="flight-card">';
-
-                // Image section
-                if (coverImg) {
-                    html += '<div class="flight-card-image">';
-                    html += '<img src="' + coverImg + '" alt="' + planeName + '" loading="lazy"/>';
-                    if (images.length > 1) {
-                        html += '<div class="flight-thumbs">';
-                        images.slice(1,4).forEach(function(u){ html += '<img src="' + u + '" alt="thumb" loading="lazy"/>'; });
+                html += '<div class="col mb-3">';
+                html += '<div class="card shadow">';
+                
+                // Image carousel section
+                if (planeImages.length > 0) {
+                    var sliderId = 'swiper-' + index;
+                    html += '<div class="swiper plane-image-slides" id="' + sliderId + '">';
+                    html += '<div class="swiper-wrapper">';
+                    
+                    $.each(planeImages, function(imgIndex, imageUrl) {
+                        var activeClass = imgIndex === 0 ? ' swiper-slide-active' : '';
+                        html += '<div class="swiper-slide' + activeClass + '">';
+                        html += '<img src="' + imageUrl + '" class="card-img-top ratio ratio-16x9" alt="' + planeName + '" loading="lazy" onerror="this.style.display=\'none\'">';
+                        html += '<div class="card-img-overlay text-end">';
+                        if (planeDescription) {
+                            html += '<i class="fa-solid fa-circle-info" data-bs-toggle="popover" data-bs-content="' + planeDescription + '"></i>';
+                        }
                         html += '</div>';
+                        html += '</div>';
+                    });
+                    
+                    html += '</div>';
+                    if (planeImages.length > 1) {
+                        html += '<div class="swiper-button-prev"></div>';
+                        html += '<div class="swiper-button-next"></div>';
                     }
                     html += '</div>';
+                } else {
+                    // Fallback for flights without images
+                    html += '<div class="no-image-placeholder">';
+                    html += '<div class="placeholder-content">';
+                    html += '<i class="fa-solid fa-plane" style="font-size: 48px; color: #ccc;"></i>';
+                    html += '<p style="color: #666; margin-top: 10px;">' + planeName + '</p>';
+                    html += '</div>';
+                    html += '</div>';
                 }
-
-                // Content section
-                html += '<div class="flight-card-body">';
-                html += '<h4 class="flight-title">' + planeName + '</h4>';
-
-                html += '<div class="flight-meta">';
-                if (duration) html += '<span class="meta-item"><i class="ico duration"></i>' + duration + '</span>';
-                if (distance) html += '<span class="meta-item"><i class="ico distance"></i>' + ('' + distance).split('.')[0] + ' km</span>';
-                if (speed) html += '<span class="meta-item"><i class="ico speed"></i>' + speed + ' kt</span>';
-                if (seats) html += '<span class="meta-item"><i class="ico seats"></i>' + seats + ' seats</span>';
+                
+                // Card body
+                html += '<div class="card-body d-flex flex-column justify-content-end">';
+                
+                // Dates - show only if available
+                if (formattedDepartureDate) {
+                    html += '<h6>Departure: ' + formattedDepartureDate + '</h6>';
+                }
+                if (formattedReturnDate) {
+                    html += '<h6>Return: ' + formattedReturnDate + '</h6>';
+                }
+                
+                // Plane name
+                html += '<h6 class="card-title text-center my-3">' + planeName + '</h6>';
+                
+                // Plane properties
+                html += '<div class="row row-cols-4 plane-properties justify-content-center">';
+                
+                if (cruiseSpeed) {
+                    html += '<div class="col">';
+                    html += '<span class="property-name">Cruise Speed</span>';
+                    html += '<span class="property-value">' + cruiseSpeed + '</span>';
+                    html += '</div>';
+                }
+                
+                if (maxLoad) {
+                    html += '<div class="col">';
+                    html += '<span class="property-name">Max Load</span>';
+                    html += '<span class="property-value">' + maxLoad + '<i class="fa-solid fa-user"></i></span>';
+                    html += '</div>';
+                }
+                
+                if (duration) {
+                    html += '<div class="col">';
+                    html += '<span class="property-name">Duration</span>';
+                    html += '<span class="property-value">' + duration + '</span>';
+                    html += '</div>';
+                }
+                
+                if (distance) {
+                    html += '<div class="col">';
+                    html += '<span class="property-name">Distance</span>';
+                    html += '<span class="property-value">' + distance + '</span>';
+                    html += '</div>';
+                }
+                
                 html += '</div>';
-
-                if (price) {
-                    html += '<div class="flight-price">';
-                    html += '<div class="price-main">' + price + '</div>';
-                    if (pricePerHead) {
-                        html += '<div class="price-sub">Per passenger: ' + pricePerHead + '</div>';
-                    }
+                html += '<hr>';
+                
+                // Pricing section
+                html += '<div class="text-center">';
+                html += '<span class="property-name fs-4">Total Charter Price</span>';
+                
+                if (totalPrice) {
+                    html += '<p class="card-text flight-price fs-3">' + totalPrice + '<small class="excl-vat">excl. VAT</small></p>';
+                }
+                
+                if (pricePerHead) {
+                    html += '<div class="my-2 d-flex flex-column">';
+                    html += '<span class="property-name fs-6">Price per head is <span class="flight-price fs-6">' + pricePerHead + '</span></span>';
+                    html += '<em class="mb-3 price-per-head-info">Charter bookings are for whole aircraft.<br>Price per head is for a full plane and only shown as a guide.</em>';
                     html += '</div>';
                 }
-
-                html += '<div class="flight-actions">';
+                
+                // Booking button
                 if (bookingUrl) {
-                    html += '<a class="btn-book-flight" href="' + bookingUrl + '" target="_blank" rel="noopener">Book Now</a>';
+                    console.log('Adding booking button for flight:', planeName, 'URL:', bookingUrl);
+                    html += '<a href="' + bookingUrl + '" class="btn btn-outline-primary px-4" target="_blank" rel="noopener">Book Flight</a>';
+                } else {
+                    console.log('No booking URL for flight:', planeName);
                 }
+                
                 html += '</div>';
-
-                html += '</div>'; // body
+                html += '</div>'; // card-body
                 html += '</div>'; // card
+                html += '</div>'; // col
             });
 
-            html += '</div>'; // grid
+            html += '</div>'; // row
         } else {
             html += '<div class="no-flights">No flights available for the selected criteria.</div>';
         }
@@ -381,16 +630,41 @@ jQuery(document).ready(function($) {
         html += '</div>';
         resultsDiv.html(html);
 
-        // Handle map image loading with jQuery event handlers (cleaner than inline JavaScript)
+        // Initialize Swiper carousels for multiple images
+        if (typeof Swiper !== 'undefined') {
+            setTimeout(function() {
+                $('.plane-image-slides').each(function() {
+                    new Swiper(this, {
+                        navigation: {
+                            nextEl: '.swiper-button-next',
+                            prevEl: '.swiper-button-prev',
+                        },
+                        loop: true,
+                        autoplay: {
+                            delay: 5000,
+                        },
+                    });
+                });
+            }, 100);
+        }
+
+        // Initialize Bootstrap popovers for plane descriptions
+        if (typeof bootstrap !== 'undefined') {
+            setTimeout(function() {
+                $('[data-bs-toggle="popover"]').each(function() {
+                    new bootstrap.Popover(this);
+                });
+            }, 100);
+        }
+
+        // Handle map image loading
         if (data.map_image_url) {
             var $mapImg = $('.route-map-img');
-
-            // Add a timeout to handle slow loading
             var imageLoadTimeout = setTimeout(function() {
                 console.warn('Map image loading timeout - showing fallback');
                 $mapImg.hide();
                 $('.map-fallback').show();
-            }, 10000); // 10 second timeout
+            }, 10000);
 
             $mapImg.on('load', function() {
                 console.log('Map image loaded successfully');
@@ -400,33 +674,6 @@ jQuery(document).ready(function($) {
             }).on('error', function() {
                 console.error('Map image failed to load:', this.src);
                 clearTimeout(imageLoadTimeout);
-
-                // Try alternative map image loading approach
-                var mapUrl = this.src;
-
-                // Create a temporary image to test if it's a CORS/Mixed Content issue
-                var testImg = new Image();
-                testImg.onload = function() {
-                    console.log('Map image accessible via JavaScript - likely a display issue');
-                    // Try to load it again by changing the src
-                    $mapImg.attr('src', '').attr('src', mapUrl);
-                };
-                testImg.onerror = function() {
-                    console.error('Map image completely inaccessible - API key or domain restriction issue');
-                    // Show detailed error message
-                    $('.map-fallback').html(
-                        '<div class="map-error">' +
-                        '<strong>Map image failed to load</strong><br>' +
-                        'This may be due to:<br>' +
-                        '• Google API key domain restrictions<br>' +
-                        '• Mixed content security policy<br>' +
-                        '• API key permissions<br><br>' +
-                        '<a href="' + mapUrl + '" target="_blank" class="btn-view-map">Click here to view map in new tab</a>' +
-                        '</div>'
-                    );
-                };
-                testImg.src = mapUrl;
-
                 $(this).hide();
                 $(this).siblings('.map-fallback').show();
             });

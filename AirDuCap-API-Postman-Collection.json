@@ -49,24 +49,22 @@
 	},
 	"item": [
 		{
-			"name": "Airport Search Tests",
+			"name": "Environment Health Check",
 			"item": [
 				{
-					"name": "Search: Cape Winelands",
+					"name": "UAT - Health Check",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/airports/api/list/?q=cape winelands&field_name=from_location",
-							"host": ["{{baseUrl}}"],
+							"raw": "{{uatUrl}}/airports/api/list/?q=cape&field_name=from_location",
+							"host": ["{{uatUrl}}"],
 							"path": ["airports", "api", "list", ""],
 							"query": [
 								{
 									"key": "q",
-									"value": "cape winelands"
+									"value": "cape"
 								},
-
-
 								{
 									"key": "field_name",
 									"value": "from_location"
@@ -79,16 +77,16 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test('Response is 200', function () {",
+									"pm.test('UAT Environment is accessible', function () {",
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test('Response is array', function () {",
+									"pm.test('UAT returns valid data', function () {",
 									"    const body = pm.response.json();",
 									"    pm.expect(Array.isArray(body)).to.be.true;",
-									"    console.log('Found airports:', body.length);",
+									"    console.log('UAT Airports found:', body.length);",
 									"    if (body.length > 0) {",
-									"        console.log('First airport:', body[0]);",
+									"        console.log('UAT Sample airport:', JSON.stringify(body[0], null, 2));",
 									"    }",
 									"});"
 								],
@@ -98,29 +96,7 @@
 					]
 				},
 				{
-					"name": "Search: Virginia",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/airports/api/list/?q=virginia&field_name=from_location",
-							"host": ["{{baseUrl}}"],
-							"path": ["airports", "api", "list", ""],
-							"query": [
-								{
-									"key": "q",
-									"value": "virginia"
-								},
-								{
-									"key": "field_name",
-									"value": "from_location"
-								}
-							]
-						}
-					}
-				},
-				{
-					"name": "Search: Cape",
+					"name": "Production - Health Check",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -139,58 +115,67 @@
 								}
 							]
 						}
-					}
-				},
-				{
-					"name": "Search: London",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/airports/api/list/?q=london&field_name=from_location",
-							"host": ["{{baseUrl}}"],
-							"path": ["airports", "api", "list", ""],
-							"query": [
-								{
-									"key": "q",
-									"value": "london"
-								},
-								{
-									"key": "field_name",
-									"value": "from_location"
-								}
-							]
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Production Environment Response', function () {",
+									"    console.log('Production Status:', pm.response.code);",
+									"    console.log('Production Response:', pm.response.text());",
+									"    if (pm.response.code === 200) {",
+									"        const body = pm.response.json();",
+									"        pm.expect(Array.isArray(body)).to.be.true;",
+									"        console.log('Production Airports found:', body.length);",
+									"        if (body.length > 0) {",
+									"            console.log('Production Sample airport:', JSON.stringify(body[0], null, 2));",
+									"        }",
+									"    } else {",
+									"        console.log('Production ERROR - Status:', pm.response.code);",
+									"        console.log('Production ERROR - Response:', pm.response.text());",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
 						}
-					}
+					]
 				}
 			]
 		},
 		{
-			"name": "Flight Search Tests",
+			"name": "Exact Client Route Comparison",
 			"item": [
 				{
-					"name": "Sample Flight Search (East London to Cape Winelands)",
+					"name": "UAT - Cape Winelands to Victoria West (Your Plugin Route)",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/flights/api/search/?from_location=101&to_location=94&date_of_travel=28/08/2025&adults=1&currency={{currency}}&ip_address=127.0.0.1",
-							"host": ["{{baseUrl}}"],
+							"raw": "{{uatUrl}}/flights/api/search/?from_location=94&to_location=158&date_of_travel=09/09/2025&date_of_return=30/09/2025&adults=1&currency={{currency}}&ip_address=127.0.0.1",
+							"host": ["{{uatUrl}}"],
 							"path": ["flights", "api", "search", ""],
 							"query": [
 								{
 									"key": "from_location",
-									"value": "101",
-									"description": "East London airport ID"
+									"value": "94",
+									"description": "Cape Winelands - ID from your plugin"
 								},
 								{
 									"key": "to_location",
-									"value": "94",
-									"description": "Cape Winelands airport ID"
+									"value": "158",
+									"description": "Victoria West - ID from your plugin"
 								},
 								{
 									"key": "date_of_travel",
-									"value": "28/08/2025"
+									"value": "09/09/2025",
+									"description": "Same date as your test"
+								},
+								{
+									"key": "date_of_return",
+									"value": "30/09/2025",
+									"description": "Same return date as your test"
 								},
 								{
 									"key": "adults",
@@ -212,17 +197,33 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test('Flight search successful', function () {",
+									"pm.test('UAT Flight Search - Your Plugin Results', function () {",
 									"    pm.response.to.have.status(200);",
 									"    const body = pm.response.json();",
-									"    pm.expect(body).to.be.an('object');",
-									"    pm.expect(body.available_flights).to.be.an('array');",
-									"    console.log('Trip type:', body.trip_type);",
-									"    console.log('Available flights:', body.available_flights.length);",
+									"    ",
+									"    console.log('=== YOUR PLUGIN UAT RESULTS ===');",
+									"    console.log('Trip Type:', body.trip_type);",
+									"    console.log('Available Flights:', body.available_flights ? body.available_flights.length : 0);",
 									"    console.log('Map URL:', body.map_image_url);",
-									"    if (body.available_flights.length > 0) {",
-									"        console.log('First flight:', body.available_flights[0]);",
+									"    ",
+									"    if (body.available_flights && body.available_flights.length > 0) {",
+									"        console.log('\\n=== FLIGHT DETAILS ===');",
+									"        body.available_flights.forEach((flight, index) => {",
+									"            console.log(`Flight ${index + 1}:`);",
+									"            console.log('  Aircraft:', flight.plane);",
+									"            console.log('  Price:', flight.computed_price);",
+									"            console.log('  Speed:', flight.speed, 'knots');",
+									"            console.log('  Duration:', flight.duration);",
+									"            console.log('  Distance:', flight.distance, 'km');",
+									"            console.log('  Seats:', flight.number_of_seats);",
+									"            console.log('  Images:', flight.plane_image_urls ? flight.plane_image_urls.length : 0);",
+									"            console.log('  Booking URL:', flight.booking_url);",
+									"            console.log('---');",
+									"        });",
 									"    }",
+									"    ",
+									"    console.log('\\n=== FULL RESPONSE ===');",
+									"    console.log(JSON.stringify(body, null, 2));",
 									"});"
 								],
 								"type": "text/javascript"
@@ -231,32 +232,34 @@
 					]
 				},
 				{
-					"name": "Round Trip Flight Search",
+					"name": "Production - Cape Winelands to Victoria West (Client Route)",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/flights/api/search/?from_location=214&to_location=191&date_of_travel=28/08/2025&date_of_return=31/08/2025&adults=1&currency={{currency}}&ip_address=127.0.0.1",
+							"raw": "{{baseUrl}}/flights/api/search/?from_location=94&to_location=158&date_of_travel=09/09/2025&date_of_return=30/09/2025&adults=1&currency={{currency}}&ip_address=127.0.0.1",
 							"host": ["{{baseUrl}}"],
 							"path": ["flights", "api", "search", ""],
 							"query": [
 								{
 									"key": "from_location",
-									"value": "214",
-									"description": "Hoedspruit Civil airport ID"
+									"value": "94",
+									"description": "Cape Winelands - Same as client"
 								},
 								{
 									"key": "to_location",
-									"value": "191",
-									"description": "Fork West airport ID"
+									"value": "158",
+									"description": "Victoria West - Same as client"
 								},
 								{
 									"key": "date_of_travel",
-									"value": "28/08/2025"
+									"value": "09/09/2025",
+									"description": "Same date as client's example"
 								},
 								{
 									"key": "date_of_return",
-									"value": "31/08/2025"
+									"value": "30/09/2025",
+									"description": "Same return date as client's example"
 								},
 								{
 									"key": "adults",
@@ -272,26 +275,192 @@
 								}
 							]
 						}
-					}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Production Flight Search - Client Results', function () {",
+									"    console.log('=== CLIENT PRODUCTION RESULTS ===');",
+									"    console.log('Status Code:', pm.response.code);",
+									"    ",
+									"    if (pm.response.code === 200) {",
+									"        const body = pm.response.json();",
+									"        console.log('Trip Type:', body.trip_type);",
+									"        console.log('Available Flights:', body.available_flights ? body.available_flights.length : 0);",
+									"        console.log('Map URL:', body.map_image_url);",
+									"        ",
+									"        if (body.available_flights && body.available_flights.length > 0) {",
+									"            console.log('\\n=== CLIENT FLIGHT DETAILS ===');",
+									"            body.available_flights.forEach((flight, index) => {",
+									"                console.log(`Flight ${index + 1}:`);",
+									"                console.log('  Aircraft:', flight.plane);",
+									"                console.log('  Price:', flight.computed_price);",
+									"                console.log('  Speed:', flight.speed, 'knots');",
+									"                console.log('  Duration:', flight.duration);",
+									"                console.log('  Distance:', flight.distance, 'km');",
+									"                console.log('  Seats:', flight.number_of_seats);",
+									"                console.log('  Images:', flight.plane_image_urls ? flight.plane_image_urls.length : 0);",
+									"                console.log('  Booking URL:', flight.booking_url);",
+									"                console.log('---');",
+									"            });",
+									"        }",
+									"        ",
+									"        console.log('\\n=== FULL CLIENT RESPONSE ===');",
+									"        console.log(JSON.stringify(body, null, 2));",
+									"    } else if (pm.response.code === 404) {",
+									"        console.log('❌ Production API returns 404 - Endpoint not found or different URL structure');",
+									"        console.log('Response:', pm.response.text());",
+									"    } else {",
+									"        console.log('❌ Production API Error:', pm.response.code);",
+									"        console.log('Response:', pm.response.text());",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
 				}
 			]
 		},
 		{
-			"name": "Environment Comparison",
+			"name": "Alternative Production Endpoints",
 			"item": [
 				{
-					"name": "UAT - Search Cape Winelands",
+					"name": "Production - Try Alternative Airport Endpoint",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{uatUrl}}/airports/api/list/?q=cape winelands&field_name=from_location",
+							"raw": "{{baseUrl}}/api/airports/?q=cape&field_name=from_location",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "airports", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "cape"
+								},
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Alternative Airport Endpoint', function () {",
+									"    console.log('Alternative Endpoint Status:', pm.response.code);",
+									"    console.log('Alternative Response:', pm.response.text());",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Production - Try Alternative Flight Endpoint",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/flights/search/?from_location=94&to_location=158&date_of_travel=09/09/2025&adults=1&currency={{currency}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "flights", "search", ""],
+							"query": [
+								{
+									"key": "from_location",
+									"value": "94"
+								},
+								{
+									"key": "to_location",
+									"value": "158"
+								},
+								{
+									"key": "date_of_travel",
+									"value": "09/09/2025"
+								},
+								{
+									"key": "adults",
+									"value": "1"
+								},
+								{
+									"key": "currency",
+									"value": "{{currency}}"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Alternative Flight Endpoint', function () {",
+									"    console.log('Alternative Flight Endpoint Status:', pm.response.code);",
+									"    console.log('Alternative Flight Response:', pm.response.text());",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Production - Root API Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", ""]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Root API Check', function () {",
+									"    console.log('Root API Status:', pm.response.code);",
+									"    console.log('Root API Response:', pm.response.text());",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Debug Authentication",
+			"item": [
+				{
+					"name": "UAT - Check Authentication",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic {{base64(username:password)}}"
+							}
+						],
+						"url": {
+							"raw": "{{uatUrl}}/airports/api/list/?q=cape&field_name=from_location",
 							"host": ["{{uatUrl}}"],
 							"path": ["airports", "api", "list", ""],
 							"query": [
 								{
 									"key": "q",
-									"value": "cape winelands"
+									"value": "cape"
 								},
 								{
 									"key": "field_name",
@@ -299,21 +468,40 @@
 								}
 							]
 						}
-					}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('UAT Authentication Test', function () {",
+									"    console.log('UAT Auth Status:', pm.response.code);",
+									"    console.log('UAT Auth Response:', pm.response.text());",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
 				},
 				{
-					"name": "Production - Search Cape Winelands",
+					"name": "Production - Check Authentication",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic {{base64(username:password)}}"
+							}
+						],
 						"url": {
-							"raw": "{{baseUrl}}/airports/api/list/?q=cape winelands&field_name=from_location",
+							"raw": "{{baseUrl}}/airports/api/list/?q=cape&field_name=from_location",
 							"host": ["{{baseUrl}}"],
 							"path": ["airports", "api", "list", ""],
 							"query": [
 								{
 									"key": "q",
-									"value": "cape winelands"
+									"value": "cape"
 								},
 								{
 									"key": "field_name",
@@ -321,26 +509,41 @@
 								}
 							]
 						}
-					}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Production Authentication Test', function () {",
+									"    console.log('Production Auth Status:', pm.response.code);",
+									"    console.log('Production Auth Response:', pm.response.text());",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
 				}
 			]
 		},
 		{
-			"name": "Bulk Airport Discovery",
+			"name": "Complete Data Comparison",
 			"item": [
 				{
-					"name": "Search: A",
+					"name": "UAT - Full Airport List",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/airports/api/list/?q=a&field_name=from_location",
-							"host": ["{{baseUrl}}"],
+							"raw": "{{uatUrl}}/airports/api/list/?q=&field_name=from_location",
+							"host": ["{{uatUrl}}"],
 							"path": ["airports", "api", "list", ""],
 							"query": [
 								{
 									"key": "q",
-									"value": "a"
+									"value": "",
+									"description": "Empty query to get all airports"
 								},
 								{
 									"key": "field_name",
@@ -348,21 +551,44 @@
 								}
 							]
 						}
-					}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('UAT All Airports', function () {",
+									"    if (pm.response.code === 200) {",
+									"        const body = pm.response.json();",
+									"        console.log('UAT Total Airports:', body.length);",
+									"        console.log('UAT Sample Airports (first 5):');",
+									"        body.slice(0, 5).forEach(airport => {",
+									"            console.log(`  ID: ${airport.id}, Name: ${airport.name}`);",
+									"        });",
+									"    } else {",
+									"        console.log('UAT Error:', pm.response.code, pm.response.text());",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
 				},
 				{
-					"name": "Search: E",
+					"name": "Production - Full Airport List",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/airports/api/list/?q=e&field_name=from_location",
+							"raw": "{{baseUrl}}/airports/api/list/?q=&field_name=from_location",
 							"host": ["{{baseUrl}}"],
 							"path": ["airports", "api", "list", ""],
 							"query": [
 								{
 									"key": "q",
-									"value": "e"
+									"value": "",
+									"description": "Empty query to get all airports"
 								},
 								{
 									"key": "field_name",
@@ -370,29 +596,111 @@
 								}
 							]
 						}
-					}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Production All Airports', function () {",
+									"    if (pm.response.code === 200) {",
+									"        const body = pm.response.json();",
+									"        console.log('Production Total Airports:', body.length);",
+									"        console.log('Production Sample Airports (first 5):');",
+									"        body.slice(0, 5).forEach(airport => {",
+									"            console.log(`  ID: ${airport.id}, Name: ${airport.name}`);",
+									"        });",
+									"    } else {",
+									"        console.log('Production Error:', pm.response.code, pm.response.text());",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "API Structure Discovery",
+			"item": [
+				{
+					"name": "Production - Different Auth Headers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "User-Agent",
+								"value": "PostmanRuntime/7.32.3"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/airports/api/list/?q=cape&field_name=from_location",
+							"host": ["{{baseUrl}}"],
+							"path": ["airports", "api", "list", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "cape"
+								},
+								{
+									"key": "field_name",
+									"value": "from_location"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Production Different Headers', function () {",
+									"    console.log('Different Headers Status:', pm.response.code);",
+									"    console.log('Different Headers Response:', pm.response.text());",
+									"    console.log('Response Headers:', JSON.stringify(pm.response.headers.toObject(), null, 2));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
 				},
 				{
-					"name": "Search: Port",
+					"name": "Production - OPTIONS Request",
 					"request": {
-						"method": "GET",
+						"method": "OPTIONS",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/airports/api/list/?q=port&field_name=from_location",
+							"raw": "{{baseUrl}}/airports/api/list/",
 							"host": ["{{baseUrl}}"],
-							"path": ["airports", "api", "list", ""],
-							"query": [
-								{
-									"key": "q",
-									"value": "port"
-								},
-								{
-									"key": "field_name",
-									"value": "from_location"
-								}
-							]
+							"path": ["airports", "api", "list", ""]
 						}
-					}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Production OPTIONS', function () {",
+									"    console.log('OPTIONS Status:', pm.response.code);",
+									"    console.log('OPTIONS Headers:', JSON.stringify(pm.response.headers.toObject(), null, 2));",
+									"    console.log('OPTIONS Response:', pm.response.text());",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
 				}
 			]
 		}

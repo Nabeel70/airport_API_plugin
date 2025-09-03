@@ -17,7 +17,17 @@ if (!defined('ABSPATH')) {
 // Plugin constants
 define('AIRDUCAP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AIRDUCAP_PLUGIN_PATH', plugin_dir_path(__FILE__));
-// Point to UAT environment since production is giving 404s
+
+// API Configuration
+// IMPORTANT: Using UAT environment because Production returns 404 errors
+// Production URL: https://book.airducap.com (currently broken - returns 404)
+// UAT URL: https://uat-book.airducap.com (working - returns 200 OK)
+// 
+// Test results (Sept 2, 2025):
+// - Production: 404 Not Found on all endpoints
+// - UAT: Working correctly with flight data
+//
+// Contact client for correct Production API endpoints before switching
 define('AIRDUCAP_API_BASE_URL', 'https://uat-book.airducap.com');
 
 class AirDuCapIntegration {
@@ -86,8 +96,21 @@ class AirDuCapIntegration {
         wp_enqueue_script('jquery');
         wp_enqueue_script('jquery-ui-datepicker');
         wp_enqueue_style('jquery-ui-datepicker', 'https://code.jquery.com/ui/1.12.1/themes/ui-lightness/jquery-ui.css');
-        wp_enqueue_script('airducap-js', AIRDUCAP_PLUGIN_URL . 'assets/airducap.js', array('jquery'), '1.0.3', true);
-        wp_enqueue_style('airducap-css', AIRDUCAP_PLUGIN_URL . 'assets/airducap.css', array(), '1.0.2');
+        
+        // Bootstrap CSS and JS for the flight cards design
+        wp_enqueue_style('bootstrap-css', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css', array(), '5.3.0');
+        wp_enqueue_script('bootstrap-js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js', array('jquery'), '5.3.0', true);
+        
+        // Font Awesome for icons
+        wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css', array(), '6.4.0');
+        
+        // Swiper for image carousels
+        wp_enqueue_style('swiper-css', 'https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css', array(), '10.0.0');
+        wp_enqueue_script('swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js', array(), '10.0.0', true);
+        
+        // Plugin's custom scripts and styles
+        wp_enqueue_script('airducap-js', AIRDUCAP_PLUGIN_URL . 'assets/airducap.js', array('jquery', 'bootstrap-js', 'swiper-js'), '1.0.4', true);
+        wp_enqueue_style('airducap-css', AIRDUCAP_PLUGIN_URL . 'assets/airducap.css', array('bootstrap-css', 'font-awesome'), '1.0.3');
 
         // Localize script for AJAX
         wp_localize_script('airducap-js', 'airducap_ajax', array(
@@ -347,6 +370,11 @@ class AirDuCapIntegration {
             error_log('AirDuCap Flights Search Params: ' . print_r($params, true));
         }
 
+        // Always log the flight search for debugging purposes
+        error_log('FLIGHT SEARCH DEBUG - API Base URL: ' . $this->api_base_url);
+        error_log('FLIGHT SEARCH DEBUG - Final URL: ' . $this->api_base_url . '/flights/api/search/?' . http_build_query($params));
+        error_log('FLIGHT SEARCH DEBUG - Search Params: ' . print_r($params, true));
+
         $flights = $this->make_api_request('/flights/api/search/', $params);
         
         if (isset($flights['error'])) {
@@ -367,65 +395,137 @@ class AirDuCapIntegration {
         ob_start();
         ?>
         <div class="airducap-search-form">
-            <h2>Find Your Perfect Flight</h2>
-
+            <!-- Tab Navigation matching screenshot -->
             <div class="flight-search-tabs">
-                <button type="button" class="tab-button active">Flight Search</button>
-                <button type="button" class="tab-button">Round Trip</button>
+                <button type="button" class="tab-button active" data-tab="flight-search">
+                    <i class="fas fa-plane" aria-hidden="true"></i>
+                    Flight Search
+                </button>
+                <button type="button" class="tab-button" data-tab="round-trip">
+                    <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                    Round Trip
+                </button>
             </div>
 
+            <!-- Search Form matching screenshot layout -->
             <form id="airducap-flight-search" class="airducap-form">
                 <?php wp_nonce_field('airducap_nonce', 'airducap_nonce'); ?>
-
-                <div class="form-row">
-                    <div class="form-group origin">
-                        <label for="origin">Origin</label>
-                        <input type="text" id="origin" name="origin" class="airport-search"
-                               data-field="from_location" placeholder="Enter origin airport" required>
+                
+                <div class="form-container">
+                    <!-- Origin Field -->
+                    <div class="form-field origin-field">
+                        <label for="origin">
+                            <i class="fas fa-plane-departure" aria-hidden="true"></i>
+                            Origin
+                        </label>
+                        <input type="text" id="origin" name="origin" class="airport-search form-input"
+                               data-field="from_location" placeholder="Where from?" required>
                         <input type="hidden" id="from_location" name="from_location">
                         <div class="airport-suggestions" id="origin-suggestions"></div>
                     </div>
 
-                    <div class="form-group destination">
-                        <label for="destination">Destination</label>
-                        <input type="text" id="destination" name="destination" class="airport-search"
-                               data-field="to_location" placeholder="Enter destination airport" required>
+                    <!-- Destination Field -->
+                    <div class="form-field destination-field">
+                        <label for="destination">
+                            <i class="fas fa-plane-arrival" aria-hidden="true"></i>
+                            Destination
+                        </label>
+                        <input type="text" id="destination" name="destination" class="airport-search form-input"
+                               data-field="to_location" placeholder="Where to?" required>
                         <input type="hidden" id="to_location" name="to_location">
                         <div class="airport-suggestions" id="destination-suggestions"></div>
                     </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group date-group">
-                        <label for="depart_date">Departure Date</label>
-                        <input type="text" id="depart_date" name="depart_date" class="date-input" placeholder="dd/mm/yyyy" required>
+                    <!-- Departure Date -->
+                    <div class="form-field date-field">
+                        <label for="depart_date">
+                            <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                            Departure
+                        </label>
+                        <input type="text" id="depart_date" name="depart_date" class="date-input form-input" 
+                               placeholder="Select date" required>
                     </div>
 
-                    <div class="form-group date-group">
-                        <label for="return_date">Return Date (Optional)</label>
-                        <input type="text" id="return_date" name="return_date" class="date-input" placeholder="dd/mm/yyyy">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group passenger-group">
-                        <label for="adults">Adults</label>
-                        <input type="number" id="adults" name="adults" min="1" max="9" value="1" required>
+                    <!-- Return Date -->
+                    <div class="form-field date-field return-field">
+                        <label for="return_date">
+                            <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                            Return
+                        </label>
+                        <input type="text" id="return_date" name="return_date" class="date-input form-input" 
+                               placeholder="Select date">
                     </div>
 
-                    <div class="form-group">
-                        <label for="children">Children</label>
-                        <input type="number" id="children" name="children" min="0" max="9" value="0">
+                    <!-- Passengers & Class Dropdown -->
+                    <div class="form-field passengers-field">
+                        <label for="passengers-dropdown">
+                            <i class="fas fa-user-friends" aria-hidden="true"></i>
+                            Passengers & Class
+                        </label>
+                        <div class="passengers-dropdown-container">
+                            <button type="button" class="passengers-dropdown-btn form-input" id="passengers-dropdown">
+                                <span class="passenger-summary">1 Adult, Economy</span>
+                                <i class="fas fa-chevron-down dropdown-arrow" aria-hidden="true"></i>
+                            </button>
+                            <div class="passengers-dropdown-menu" id="passengers-menu">
+                                <div class="passenger-section">
+                                    <div class="passenger-row">
+                                        <span class="passenger-label">Adults</span>
+                                        <div class="passenger-controls">
+                                            <button type="button" class="passenger-btn minus" data-type="adults">-</button>
+                                            <span class="passenger-count" id="adults-count">1</span>
+                                            <button type="button" class="passenger-btn plus" data-type="adults">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="passenger-row">
+                                        <span class="passenger-label">Children</span>
+                                        <div class="passenger-controls">
+                                            <button type="button" class="passenger-btn minus" data-type="children">-</button>
+                                            <span class="passenger-count" id="children-count">0</span>
+                                            <button type="button" class="passenger-btn plus" data-type="children">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="passenger-row">
+                                        <span class="passenger-label">Infants</span>
+                                        <div class="passenger-controls">
+                                            <button type="button" class="passenger-btn minus" data-type="infants">-</button>
+                                            <span class="passenger-count" id="infants-count">0</span>
+                                            <button type="button" class="passenger-btn plus" data-type="infants">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="class-section">
+                                    <div class="class-options">
+                                        <label class="class-option">
+                                            <input type="radio" name="travel_class" value="economy" checked>
+                                            <span>Economy</span>
+                                        </label>
+                                        <label class="class-option">
+                                            <input type="radio" name="travel_class" value="business">
+                                            <span>Business</span>
+                                        </label>
+                                        <label class="class-option">
+                                            <input type="radio" name="travel_class" value="first">
+                                            <span>First Class</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Hidden inputs for form submission -->
+                        <input type="hidden" id="adults" name="adults" value="1">
+                        <input type="hidden" id="children" name="children" value="0">
+                        <input type="hidden" id="infants" name="infants" value="0">
+                        <input type="hidden" id="class" name="class" value="economy">
                     </div>
 
-                    <div class="form-group">
-                        <label for="infants">Infants</label>
-                        <input type="number" id="infants" name="infants" min="0" max="9" value="0">
+                    <!-- Search Button -->
+                    <div class="form-field search-field">
+                        <button type="submit" class="search-btn">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            <span class="btn-text">Search Flights</span>
+                        </button>
                     </div>
-                </div>
-
-                <div class="search-button-container">
-                    <button type="submit" class="btn-search">Search Flights</button>
                 </div>
             </form>
 
